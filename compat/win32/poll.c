@@ -49,8 +49,8 @@
 # include <sys/time.h>
 # include <sys/socket.h>
 # include <sys/select.h>
-# include <unistd.h>
 #endif
+# include <unistd.h>
 
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
@@ -444,6 +444,7 @@ poll (struct pollfd *pfd, nfds_t nfd, int timeout)
   MSG msg;
   int rc = 0;
   nfds_t i;
+  clock_t start = clock();
 
   if (nfd < 0 || timeout < -1)
     {
@@ -598,6 +599,11 @@ restart:
   if (!rc && timeout == INFTIM)
     {
       SwitchToThread();
+
+      // If it's been over 100ms, sleep 10ms second to avoid busy wait
+      if (clock() - start > 100)
+          usleep(10 * 1000);
+
       goto restart;
     }
 
